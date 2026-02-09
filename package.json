@@ -1,6 +1,6 @@
 {
   "name": "stina-ext-calendar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Calendar extension for Stina - subscribe to calendars, view upcoming events, and get AI-driven reminders",
   "type": "module",
   "main": "dist/index.js",
@@ -11,7 +11,13 @@
     "typecheck": "tsc --noEmit",
     "pack-extension": "node scripts/pack.js"
   },
-  "keywords": ["stina", "extension", "calendar", "ical", "caldav"],
+  "keywords": [
+    "stina",
+    "extension",
+    "calendar",
+    "ical",
+    "caldav"
+  ],
   "author": {
     "name": "Stina Team",
     "url": "https://github.com/einord"
