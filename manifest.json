@@ -20,6 +20,7 @@
   "permissions": [
     "tools.register",
     "actions.register",
+    "panels.register",
     "events.emit",
     "storage.collections",
     "secrets.manage",
