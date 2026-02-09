@@ -1,0 +1,43 @@
+{
+  "name": "stina-ext-calendar",
+  "version": "0.1.0",
+  "description": "Calendar extension for Stina - subscribe to calendars, view upcoming events, and get AI-driven reminders",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "pack-extension": "node scripts/pack.js"
+  },
+  "keywords": ["stina", "extension", "calendar", "ical", "caldav"],
+  "author": {
+    "name": "Stina Team",
+    "url": "https://github.com/einord"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/einord/stina-ext-calendar.git"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@stina/extension-api": "^0.24.0",
+    "@types/archiver": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "archiver": "^7.0.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
+  },
+  "dependencies": {
+    "tsdav": "^2.1.7",
+    "ical.js": "^2.1.0",
+    "ical-generator": "^8.0.0",
+    "node-fetch": "^3.3.2"
+  }
+}

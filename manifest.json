@@ -1,0 +1,534 @@
+{
+  "$schema": "https://stina.app/schemas/extension-manifest.json",
+  "id": "calendar-manager",
+  "name": "Calendar Manager",
+  "version": "0.1.0",
+  "description": "Subscribe to calendars (iCal, Google, iCloud, Outlook, CalDAV), view upcoming events, and get AI-driven reminders.",
+  "type": "tools",
+  "author": {
+    "name": "Stina Team",
+    "url": "https://github.com/einord"
+  },
+  "repository": "https://github.com/einord/stina-ext-calendar",
+  "license": "MIT",
+  "engines": {
+    "stina": ">=0.7.1"
+  },
+  "platforms": ["web", "electron", "tui"],
+  "main": "index.js",
+
+  "permissions": [
+    "tools.register",
+    "actions.register",
+    "events.emit",
+    "storage.collections",
+    "secrets.manage",
+    "scheduler.register",
+    "chat.message.write",
+    "settings.register",
+    "network:*",
+    "user.profile.read"
+  ],
+
+  "contributes": {
+    "storage": {
+      "collections": {
+        "accounts": { "indexes": ["provider", "enabled"] },
+        "events": { "indexes": ["accountId", "startAt", "endAt", "calendarId"] },
+        "settings": {},
+        "syncState": { "indexes": ["accountId"] }
+      }
+    },
+    "settings": [
+      {
+        "id": "google_client_id",
+        "title": "Google Calendar Client ID",
+        "description": "OAuth2 Client ID from Google Cloud Console for Calendar access",
+        "type": "string"
+      },
+      {
+        "id": "google_client_secret",
+        "title": "Google Calendar Client Secret",
+        "description": "OAuth2 Client Secret from Google Cloud Console for Calendar access",
+        "type": "string"
+      },
+      {
+        "id": "outlook_client_id",
+        "title": "Outlook Calendar Client ID",
+        "description": "OAuth2 Client ID from Azure AD for Outlook Calendar access",
+        "type": "string"
+      },
+      {
+        "id": "outlook_tenant_id",
+        "title": "Outlook Calendar Tenant ID",
+        "description": "Azure AD Tenant ID (use 'common' for multi-tenant)",
+        "type": "string",
+        "default": "common"
+      }
+    ],
+    "toolSettings": [
+      {
+        "id": "accounts",
+        "title": "Calendar Accounts",
+        "description": "Configure calendar accounts to subscribe to.",
+        "view": {
+          "kind": "component",
+          "data": {
+            "accounts": {
+              "action": "getAccounts",
+              "refreshOn": ["calendar.account.changed"]
+            },
+            "editState": {
+              "action": "getEditState",
+              "refreshOn": ["calendar.edit.changed"]
+            }
+          },
+          "content": {
+            "component": "VerticalStack",
+            "gap": 1,
+            "children": [
+              {
+                "component": "VerticalStack",
+                "gap": 0.5,
+                "children": {
+                  "each": "$accounts",
+                  "as": "account",
+                  "items": [
+                    {
+                      "component": "HorizontalStack",
+                      "gap": 0.5,
+                      "style": { "align-items": "center", "justify-content": "space-between" },
+                      "children": [
+                        {
+                          "component": "VerticalStack",
+                          "gap": 0.25,
+                          "children": [
+                            {
+                              "component": "Label",
+                              "text": "$account.name"
+                            },
+                            {
+                              "component": "Label",
+                              "text": "$account.providerLabel",
+                              "style": { "font-size": "0.85em", "opacity": "0.7" }
+                            }
+                          ]
+                        },
+                        {
+                          "component": "HorizontalStack",
+                          "gap": 0.25,
+                          "children": [
+                            {
+                              "component": "Pill",
+                              "text": "$account.statusVariant == 'success' ? 'Connected' : $account.statusVariant == 'danger' ? 'Error' : 'Disabled'",
+                              "variant": "$account.statusVariant"
+                            },
+                            {
+                              "component": "IconButton",
+                              "icon": "edit-02",
+                              "tooltip": "Edit account",
+                              "onClickAction": {
+                                "action": "editAccount",
+                                "params": { "id": "$account.id" }
+                              }
+                            },
+                            {
+                              "component": "IconButton",
+                              "icon": "delete-02",
+                              "tooltip": "Delete account",
+                              "type": "danger",
+                              "onClickAction": {
+                                "action": "deleteAccount",
+                                "params": { "id": "$account.id" }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "component": "Button",
+                "text": "Add Account",
+                "onClickAction": "showAddForm"
+              },
+              {
+                "component": "Modal",
+                "title": "$editState.modalTitle",
+                "open": "$editState.showModal",
+                "onCloseAction": "closeModal",
+                "body": {
+                  "component": "VerticalStack",
+                  "gap": 1,
+                  "children": [
+                    {
+                      "component": "TextInput",
+                      "label": "Display Name",
+                      "placeholder": "Work Calendar",
+                      "value": "$editState.form.name",
+                      "onChangeAction": {
+                        "action": "updateFormField",
+                        "params": { "field": "name", "value": "$value" }
+                      }
+                    },
+                    {
+                      "component": "Select",
+                      "label": "Provider",
+                      "options": [
+                        { "label": "iCal URL", "value": "ical" },
+                        { "label": "Google Calendar", "value": "google" },
+                        { "label": "iCloud", "value": "icloud" },
+                        { "label": "Outlook", "value": "outlook" },
+                        { "label": "CalDAV", "value": "caldav" }
+                      ],
+                      "selectedValue": "$editState.form.provider",
+                      "onChangeAction": {
+                        "action": "updateFormField",
+                        "params": { "field": "provider", "value": "$value" }
+                      }
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$editState.form.provider == 'ical'",
+                      "children": [
+                        {
+                          "component": "TextInput",
+                          "label": "Calendar URL",
+                          "placeholder": "https://example.com/calendar.ics",
+                          "value": "$editState.form.url",
+                          "onChangeAction": {
+                            "action": "updateFormField",
+                            "params": { "field": "url", "value": "$value" }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$editState.form.provider == 'google' || $editState.form.provider == 'outlook'",
+                      "children": [
+                        {
+                          "component": "ConditionalGroup",
+                          "condition": "$editState.oauthStatus == 'pending'",
+                          "children": [
+                            {
+                              "component": "Button",
+                              "text": "Connect with OAuth",
+                              "onClickAction": "startOAuth"
+                            }
+                          ]
+                        },
+                        {
+                          "component": "ConditionalGroup",
+                          "condition": "$editState.oauthStatus == 'awaiting'",
+                          "children": [
+                            {
+                              "component": "VerticalStack",
+                              "gap": 0.5,
+                              "children": [
+                                {
+                                  "component": "Label",
+                                  "text": "Go to the URL below and enter the code:"
+                                },
+                                {
+                                  "component": "Label",
+                                  "text": "$editState.oauthUrl",
+                                  "style": { "font-family": "monospace", "word-break": "break-all" }
+                                },
+                                {
+                                  "component": "Label",
+                                  "text": "$editState.oauthCode",
+                                  "style": { "font-size": "1.5em", "font-weight": "bold", "text-align": "center" }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "component": "ConditionalGroup",
+                          "condition": "$editState.oauthStatus == 'connected'",
+                          "children": [
+                            {
+                              "component": "Pill",
+                              "text": "Connected",
+                              "variant": "success"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$editState.form.provider == 'icloud' || $editState.form.provider == 'caldav'",
+                      "children": [
+                        {
+                          "component": "ConditionalGroup",
+                          "condition": "$editState.form.provider == 'caldav'",
+                          "children": [
+                            {
+                              "component": "TextInput",
+                              "label": "CalDAV Server URL",
+                              "placeholder": "https://caldav.example.com/dav/",
+                              "value": "$editState.form.url",
+                              "onChangeAction": {
+                                "action": "updateFormField",
+                                "params": { "field": "url", "value": "$value" }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "component": "TextInput",
+                          "label": "Username",
+                          "placeholder": "username or email",
+                          "value": "$editState.form.username",
+                          "onChangeAction": {
+                            "action": "updateFormField",
+                            "params": { "field": "username", "value": "$value" }
+                          }
+                        },
+                        {
+                          "component": "TextInput",
+                          "label": "Password / App-Specific Password",
+                          "placeholder": "xxxx-xxxx-xxxx-xxxx",
+                          "value": "$editState.form.password",
+                          "onChangeAction": {
+                            "action": "updateFormField",
+                            "params": { "field": "password", "value": "$value" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "footer": {
+                  "component": "HorizontalStack",
+                  "gap": 0.5,
+                  "style": { "justify-content": "flex-end" },
+                  "children": [
+                    {
+                      "component": "Button",
+                      "text": "Test Connection",
+                      "onClickAction": "testConnection"
+                    },
+                    {
+                      "component": "Button",
+                      "text": "Save",
+                      "onClickAction": "saveAccount"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "calendar-settings",
+        "title": "Calendar Settings",
+        "description": "Global settings for calendar reminders.",
+        "view": {
+          "kind": "component",
+          "data": {
+            "settings": {
+              "action": "getSettings",
+              "refreshOn": ["calendar.settings.changed"]
+            }
+          },
+          "content": {
+            "component": "VerticalStack",
+            "gap": 1,
+            "children": [
+              {
+                "component": "TextInput",
+                "label": "Reminder Minutes Before Event",
+                "placeholder": "15",
+                "value": "$settings.reminderMinutes",
+                "onChangeAction": {
+                  "action": "updateSetting",
+                  "params": { "key": "reminderMinutes", "value": "$value" }
+                }
+              },
+              {
+                "component": "Label",
+                "text": "How many minutes before an event should Stina remind you.",
+                "style": { "font-size": "0.85em", "opacity": "0.7" }
+              },
+              {
+                "component": "TextInput",
+                "label": "Reminder Instruction",
+                "placeholder": "Remind me briefly about the upcoming event",
+                "value": "$settings.instruction",
+                "onChangeAction": {
+                  "action": "updateSetting",
+                  "params": { "key": "instruction", "value": "$value" }
+                }
+              },
+              {
+                "component": "Label",
+                "text": "This instruction is included in every reminder sent to Stina.",
+                "style": { "font-size": "0.85em", "opacity": "0.7" }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "calendar.upcoming",
+        "title": "Upcoming Events",
+        "icon": "calendar-03",
+        "view": {
+          "kind": "component",
+          "data": {
+            "events": {
+              "action": "getUpcomingEvents",
+              "refreshOn": ["calendar.event.changed", "calendar.account.changed"]
+            }
+          },
+          "content": {
+            "component": "VerticalStack",
+            "gap": 1,
+            "children": {
+              "each": "$events",
+              "as": "group",
+              "items": [
+                {
+                  "component": "VerticalStack",
+                  "gap": 0.5,
+                  "children": [
+                    {
+                      "component": "Label",
+                      "text": "$group.label",
+                      "style": { "font-weight": "bold", "font-size": "0.9em", "opacity": "0.8" }
+                    },
+                    {
+                      "component": "VerticalStack",
+                      "gap": 0.25,
+                      "children": {
+                        "each": "$group.events",
+                        "as": "event",
+                        "items": [
+                          {
+                            "component": "HorizontalStack",
+                            "gap": 0.5,
+                            "style": { "align-items": "center" },
+                            "children": [
+                              {
+                                "component": "Pill",
+                                "text": "$event.time",
+                                "variant": "default"
+                              },
+                              {
+                                "component": "VerticalStack",
+                                "gap": 0.1,
+                                "children": [
+                                  {
+                                    "component": "Label",
+                                    "text": "$event.title"
+                                  },
+                                  {
+                                    "component": "Label",
+                                    "text": "$event.location",
+                                    "style": { "font-size": "0.8em", "opacity": "0.6" }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "tools": [
+      {
+        "id": "cal_accounts_list",
+        "name": "List Calendar Accounts",
+        "description": "List configured calendar accounts."
+      },
+      {
+        "id": "cal_accounts_add",
+        "name": "Add Calendar Account",
+        "description": "Add a new calendar account."
+      },
+      {
+        "id": "cal_accounts_update",
+        "name": "Update Calendar Account",
+        "description": "Update an existing calendar account configuration."
+      },
+      {
+        "id": "cal_accounts_delete",
+        "name": "Delete Calendar Account",
+        "description": "Delete a calendar account."
+      },
+      {
+        "id": "cal_accounts_test",
+        "name": "Test Calendar Account",
+        "description": "Test connection to a calendar account."
+      },
+      {
+        "id": "cal_events_list",
+        "name": "List Calendar Events",
+        "description": "List calendar events within a date range."
+      },
+      {
+        "id": "cal_events_get",
+        "name": "Get Calendar Event",
+        "description": "Get details of a specific calendar event."
+      },
+      {
+        "id": "cal_events_create",
+        "name": "Create Calendar Event",
+        "description": "Create a new calendar event.",
+        "requiresConfirmation": true
+      },
+      {
+        "id": "cal_events_update",
+        "name": "Update Calendar Event",
+        "description": "Update an existing calendar event.",
+        "requiresConfirmation": true
+      },
+      {
+        "id": "cal_events_delete",
+        "name": "Delete Calendar Event",
+        "description": "Delete a calendar event.",
+        "requiresConfirmation": true
+      },
+      {
+        "id": "cal_events_sync",
+        "name": "Sync Calendar Events",
+        "description": "Force sync of calendar events from all accounts."
+      },
+      {
+        "id": "cal_settings_get",
+        "name": "Get Calendar Settings",
+        "description": "Get current calendar settings."
+      },
+      {
+        "id": "cal_settings_update",
+        "name": "Update Calendar Settings",
+        "description": "Update calendar settings such as reminder time and instruction."
+      }
+    ],
+    "prompts": [
+      {
+        "id": "calendar-instructions",
+        "section": "tools",
+        "i18n": {
+          "en": "You have access to Calendar Manager tools for managing calendar events. Use cal_accounts_list to see configured calendar accounts. Use cal_events_list with from/to dates to see upcoming events. Use cal_events_create/update/delete to manage events (requires user confirmation). When a calendar reminder arrives from the system, follow the instruction to notify the user about the upcoming event.",
+          "sv": "Du har tillgång till Calendar Manager-verktyg för att hantera kalenderhändelser. Använd cal_accounts_list för att se konfigurerade kalenderkonton. Använd cal_events_list med from/to-datum för att se kommande händelser. Använd cal_events_create/update/delete för att hantera händelser (kräver bekräftelse). När en kalenderpåminnelse kommer från systemet, följ instruktionen för att meddela användaren om den kommande händelsen."
+        }
+      }
+    ]
+  }
+}
