@@ -179,6 +179,7 @@ function activate(context: ExtensionContext): Disposable {
     log: context.log,
     scheduleReminders: (userId: string, userStorage: StorageAPI, userSecrets: SecretsAPI) =>
       scheduleReminders(userId, userStorage, userSecrets, reminderDeps),
+    emitEventChanged,
   }
 
   // Set up sync scheduler
@@ -197,6 +198,7 @@ function activate(context: ExtensionContext): Disposable {
         emitEditChanged,
         emitEventChanged,
         scheduleSyncForUser: syncScheduler.scheduleSyncForUser,
+        triggerImmediateSync: (execContext) => syncAllAccountsWithContext(execContext, syncDeps),
         log: context.log,
       })
     : []

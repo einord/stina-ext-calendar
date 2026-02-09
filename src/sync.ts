@@ -54,6 +54,7 @@ export interface SyncDeps {
     debug: (msg: string, data?: Record<string, unknown>) => void
   }
   scheduleReminders: (userId: string, userStorage: StorageAPI, userSecrets: SecretsAPI) => Promise<void>
+  emitEventChanged?: () => void
 }
 
 const SYNC_INTERVAL_MS = 10 * 60 * 1000 // Sync every 10 minutes
@@ -165,6 +166,9 @@ export async function syncAllAccountsWithContext(
       if (!account.enabled) continue
       await syncAccountEvents(account, execContext.userStorage, execContext.userSecrets, deps)
     }
+
+    // Notify UI that events have changed
+    deps.emitEventChanged?.()
 
     // After sync, schedule reminders for upcoming events
     await deps.scheduleReminders(execContext.userId, execContext.userStorage, execContext.userSecrets)
