@@ -12,7 +12,7 @@
   "repository": "https://github.com/einord/stina-ext-calendar",
   "license": "MIT",
   "engines": {
-    "stina": ">=0.7.1"
+    "stina": ">=0.5.0"
   },
   "platforms": ["web", "electron", "tui"],
   "main": "index.js",
@@ -36,7 +36,8 @@
         "accounts": { "indexes": ["provider", "enabled"] },
         "events": { "indexes": ["accountId", "startAt", "endAt", "calendarId"] },
         "settings": {},
-        "syncState": { "indexes": ["accountId"] }
+        "syncState": { "indexes": ["accountId"] },
+        "users": {}
       }
     },
     "settings": [
