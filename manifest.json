@@ -2,7 +2,7 @@
   "$schema": "https://stina.app/schemas/extension-manifest.json",
   "id": "calendar-manager",
   "name": "Calendar Manager",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Subscribe to calendars (iCal, Google, iCloud, Outlook, CalDAV), view upcoming events, and get AI-driven reminders.",
   "type": "tools",
   "author": {
@@ -24,7 +24,7 @@
     "events.emit",
     "storage.collections",
     "secrets.manage",
-    "scheduler.register",
+    "background.workers",
     "chat.message.write",
     "settings.register",
     "network:*",

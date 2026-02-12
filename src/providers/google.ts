@@ -63,6 +63,7 @@ export class GoogleCalendarProvider implements CalendarProviderInterface {
     const token = getAccessToken(credentials)
     const calendars = await this.listCalendars(account, credentials)
     const allEvents: CalendarEvent[] = []
+    const deletedUids: string[] = []
     let newSyncToken: string | null = null
 
     for (const cal of calendars) {
@@ -82,7 +83,11 @@ export class GoogleCalendarProvider implements CalendarProviderInterface {
         }
 
         for (const item of data.items || []) {
-          if (item.status === 'cancelled') continue
+          if (item.status === 'cancelled') {
+            const uid = item.iCalUID || item.id
+            if (uid) deletedUids.push(uid)
+            continue
+          }
 
           const startAt = item.start?.dateTime || item.start?.date
           const endAt = item.end?.dateTime || item.end?.date
@@ -118,6 +123,7 @@ export class GoogleCalendarProvider implements CalendarProviderInterface {
 
     return {
       events: allEvents,
+      deletedUids: deletedUids.length > 0 ? deletedUids : undefined,
       syncToken: newSyncToken,
       fullSync: !syncToken,
     }

@@ -192,7 +192,8 @@ export function createGetEventTool(): Tool {
  */
 export function createCreateEventTool(
   providers: ProviderRegistry,
-  credentialConfig: CredentialRefreshConfig
+  credentialConfig: CredentialRefreshConfig,
+  emitEventChanged?: () => void
 ): Tool {
   return {
     id: 'cal_events_create',
@@ -290,6 +291,8 @@ export function createCreateEventTool(
           rawIcs: createdEvent.rawIcs,
         })
 
+        emitEventChanged?.()
+
         return {
           success: true,
           data: {
@@ -320,7 +323,8 @@ export function createCreateEventTool(
  */
 export function createUpdateEventTool(
   providers: ProviderRegistry,
-  credentialConfig: CredentialRefreshConfig
+  credentialConfig: CredentialRefreshConfig,
+  emitEventChanged?: () => void
 ): Tool {
   return {
     id: 'cal_events_update',
@@ -436,6 +440,8 @@ export function createUpdateEventTool(
           rawIcs: updatedEvent.rawIcs,
         })
 
+        emitEventChanged?.()
+
         return {
           success: true,
           data: {
@@ -466,7 +472,8 @@ export function createUpdateEventTool(
  */
 export function createDeleteEventTool(
   providers: ProviderRegistry,
-  credentialConfig: CredentialRefreshConfig
+  credentialConfig: CredentialRefreshConfig,
+  emitEventChanged?: () => void
 ): Tool {
   return {
     id: 'cal_events_delete',
@@ -520,6 +527,8 @@ export function createDeleteEventTool(
 
         // Remove from local cache
         await repository.events.delete(id)
+
+        emitEventChanged?.()
 
         return { success: true, data: { deleted: true } }
       } catch (error) {

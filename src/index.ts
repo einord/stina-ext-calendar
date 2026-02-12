@@ -10,8 +10,6 @@ import {
   type ExtensionContext,
   type ExecutionContext,
   type Disposable,
-  type StorageAPI,
-  type SecretsAPI,
 } from '@stina/extension-api/runtime'
 import { ExtensionRepository } from './db/repository.js'
 import { ProviderRegistry, type ProviderConfig } from './providers/index.js'
@@ -31,10 +29,11 @@ import {
   createUpdateSettingsTool,
 } from './tools/index.js'
 import { registerActions } from './actions/index.js'
-import { createSyncScheduler, syncAllAccountsWithContext } from './sync.js'
-import { setupReminderListener, scheduleReminders } from './reminders.js'
+import { syncAllAccountsWithContext } from './sync.js'
+import { createCalendarWorkerManager } from './worker.js'
 import { clearAllEditStates } from './edit-state.js'
 import type { CredentialRefreshConfig } from './credentials.js'
+import type { ChatAPI, UserAPI } from './shared-deps.js'
 
 type EventsApi = { emit: (name: string, payload?: Record<string, unknown>) => Promise<void> }
 
@@ -52,39 +51,7 @@ type SettingsApi = {
   get: <T = string>(key: string) => Promise<T | undefined>
 }
 
-type ChatAPI = {
-  appendInstruction: (message: {
-    text: string
-    conversationId?: string
-    userId?: string
-  }) => Promise<void>
-}
-
-type SchedulerAPI = {
-  schedule: (job: {
-    id: string
-    schedule: { type: 'at'; at: string } | { type: 'interval'; everyMs: number } | { type: 'cron'; cron: string; timezone?: string }
-    payload?: Record<string, unknown>
-    userId: string
-  }) => Promise<void>
-  cancel: (jobId: string) => Promise<void>
-  onFire: (
-    callback: (payload: { id: string; payload?: Record<string, unknown>; userId: string }, execContext: ExecutionContext) => void
-  ) => Disposable
-}
-
-type UserProfile = {
-  firstName?: string
-  nickname?: string
-  language?: string
-  timezone?: string
-}
-
-type UserAPI = {
-  getProfile: (userId?: string) => Promise<UserProfile>
-}
-
-function activate(context: ExtensionContext): Disposable {
+async function activate(context: ExtensionContext): Promise<Disposable> {
   context.log.info('Activating Calendar extension')
 
   // Check for required permissions
@@ -106,7 +73,7 @@ function activate(context: ExtensionContext): Disposable {
   const actionsApi = (context as ExtensionContext & { actions?: ActionsApi }).actions
   const settingsApi = (context as ExtensionContext & { settings?: SettingsApi }).settings
   const chat = (context as ExtensionContext & { chat?: ChatAPI }).chat
-  const scheduler = (context as ExtensionContext & { scheduler?: SchedulerAPI }).scheduler
+  const backgroundWorkers = context.backgroundWorkers
   const user = (context as ExtensionContext & { user?: UserAPI }).user
 
   // Event emitters
@@ -149,9 +116,9 @@ function activate(context: ExtensionContext): Disposable {
     providers.setConfig(config)
   }
 
-  void loadProviderConfig()
+  await loadProviderConfig()
 
-  // Build credential refresh config
+  // Build credential refresh config (after provider config is loaded)
   const providerConfig = providers.getConfig()
   const credentialConfig: CredentialRefreshConfig = {
     googleClientId: providerConfig.googleClientId,
@@ -160,33 +127,28 @@ function activate(context: ExtensionContext): Disposable {
     outlookTenantId: providerConfig.outlookTenantId,
   }
 
-  // Reminder dependencies
-  const reminderDeps = {
-    chat,
-    scheduler,
-    user,
-    log: context.log,
-  }
-
-  // Sync dependencies
+  // Sync dependencies (used by triggerImmediateSync)
   const syncDeps = {
     providers,
     extensionRepo,
     credentialConfig,
     chat,
-    scheduler,
     user,
     log: context.log,
-    scheduleReminders: (userId: string, userStorage: StorageAPI, userSecrets: SecretsAPI) =>
-      scheduleReminders(userId, userStorage, userSecrets, reminderDeps),
     emitEventChanged,
   }
 
-  // Set up sync scheduler
-  const syncScheduler = createSyncScheduler(syncDeps)
-
-  // Set up reminder listener
-  const reminderDisposable = setupReminderListener(reminderDeps)
+  // Set up background worker manager
+  const workerManager = createCalendarWorkerManager({
+    providers,
+    extensionRepo,
+    credentialConfig,
+    backgroundWorkers,
+    chat,
+    user,
+    log: context.log,
+    emitEventChanged,
+  })
 
   // Register UI actions
   const actionDisposables = actionsApi
@@ -197,7 +159,7 @@ function activate(context: ExtensionContext): Disposable {
         emitSettingsChanged,
         emitEditChanged,
         emitEventChanged,
-        scheduleSyncForUser: syncScheduler.scheduleSyncForUser,
+        startWorkerForUser: workerManager.startWorkerForUser,
         triggerImmediateSync: (execContext) => syncAllAccountsWithContext(execContext, syncDeps),
         log: context.log,
       })
@@ -217,9 +179,9 @@ function activate(context: ExtensionContext): Disposable {
     context.tools!.register(createTestAccountTool(providers)),
     context.tools!.register(createListEventsTool()),
     context.tools!.register(createGetEventTool()),
-    context.tools!.register(createCreateEventTool(providers, credentialConfig)),
-    context.tools!.register(createUpdateEventTool(providers, credentialConfig)),
-    context.tools!.register(createDeleteEventTool(providers, credentialConfig)),
+    context.tools!.register(createCreateEventTool(providers, credentialConfig, emitEventChanged)),
+    context.tools!.register(createUpdateEventTool(providers, credentialConfig, emitEventChanged)),
+    context.tools!.register(createDeleteEventTool(providers, credentialConfig, emitEventChanged)),
     context.tools!.register(createSyncEventsTool(providers, credentialConfig)),
     context.tools!.register(createGetSettingsTool()),
     context.tools!.register(
@@ -262,21 +224,23 @@ function activate(context: ExtensionContext): Disposable {
       : [],
   })
 
-  // Listen for scheduler events
-  const schedulerDisposable = syncScheduler.setupSchedulerListener()
-
-  // Auto-start sync for all existing users with accounts
-  void syncScheduler.initializeSyncForExistingUsers().catch((err) =>
-    context.log.warn('Failed to initialize sync', {
-      error: err instanceof Error ? err.message : String(err),
-    })
-  )
+  // Auto-start workers for all existing users with accounts
+  void (async () => {
+    try {
+      const userIds = await extensionRepo.getAllUserIds()
+      for (const userId of userIds) {
+        await workerManager.startWorkerForUser(userId)
+      }
+    } catch (err) {
+      context.log.warn('Failed to initialize workers for existing users', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  })()
 
   return {
     dispose: () => {
-      schedulerDisposable?.dispose()
-      reminderDisposable?.dispose()
-      syncScheduler.cancelAll()
+      workerManager.stopAll()
       clearAllEditStates()
       for (const disposable of disposables) {
         disposable.dispose()

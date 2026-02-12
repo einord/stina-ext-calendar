@@ -32,7 +32,7 @@ export interface ActionDeps {
   emitSettingsChanged: () => void
   emitEditChanged: () => void
   emitEventChanged: () => void
-  scheduleSyncForUser: (userId: string) => Promise<void>
+  startWorkerForUser: (userId: string) => Promise<void>
   triggerImmediateSync: (execContext: ExecutionContext) => Promise<void>
   log: {
     warn: (msg: string, data?: Record<string, unknown>) => void
@@ -268,7 +268,7 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
                     deps.emitEditChanged()
                     deps.emitAccountChanged()
 
-                    void deps.scheduleSyncForUser(userId).catch((err) =>
+                    void deps.startWorkerForUser(userId).catch((err) =>
                       deps.log.warn('Failed to schedule sync after OAuth', {
                         error: err instanceof Error ? err.message : String(err),
                       })
@@ -336,7 +336,7 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
                     deps.emitEditChanged()
                     deps.emitAccountChanged()
 
-                    void deps.scheduleSyncForUser(userId).catch((err) =>
+                    void deps.startWorkerForUser(userId).catch((err) =>
                       deps.log.warn('Failed to schedule sync after OAuth', {
                         error: err instanceof Error ? err.message : String(err),
                       })
@@ -460,7 +460,7 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
           deps.emitAccountChanged()
 
           // Schedule periodic sync and trigger immediate first sync
-          void deps.scheduleSyncForUser(execContext.userId).catch((err) =>
+          void deps.startWorkerForUser(execContext.userId).catch((err) =>
             deps.log.warn('Failed to schedule sync after save', {
               error: err instanceof Error ? err.message : String(err),
             })

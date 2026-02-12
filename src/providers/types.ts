@@ -19,6 +19,7 @@ export interface RemoteCalendar {
  */
 export interface SyncResult {
   events: CalendarEvent[]
+  deletedUids?: string[]  // UIDs of events cancelled/deleted during incremental sync
   syncToken?: string | null
   deltaLink?: string | null
   fullSync: boolean
