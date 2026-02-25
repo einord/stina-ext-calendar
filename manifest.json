@@ -70,12 +70,16 @@
     ],
     "toolSettings": [
       {
-        "id": "accounts",
-        "title": "Calendar Accounts",
-        "description": "Configure calendar accounts to subscribe to.",
+        "id": "calendar",
+        "title": "Calendar",
+        "description": "Calendar settings and account configuration.",
         "view": {
           "kind": "component",
           "data": {
+            "settings": {
+              "action": "getSettings",
+              "refreshOn": ["calendar.settings.changed"]
+            },
             "accounts": {
               "action": "getAccounts",
               "refreshOn": ["calendar.account.changed"]
@@ -87,8 +91,64 @@
           },
           "content": {
             "component": "VerticalStack",
-            "gap": 1,
+            "gap": 1.5,
             "children": [
+              {
+                "component": "VerticalStack",
+                "gap": 1,
+                "children": [
+                  {
+                    "component": "TextInput",
+                    "label": "Reminder Minutes Before Event",
+                    "placeholder": "15",
+                    "value": "$settings.reminderMinutes",
+                    "onChangeAction": {
+                      "action": "updateSetting",
+                      "params": { "key": "reminderMinutes", "value": "$value" }
+                    }
+                  },
+                  {
+                    "component": "Label",
+                    "text": "How many minutes before an event should Stina remind you.",
+                    "style": { "font-size": "0.85em", "opacity": "0.7" }
+                  },
+                  {
+                    "component": "TextInput",
+                    "label": "Reminder Instruction",
+                    "placeholder": "Remind me briefly about the upcoming event",
+                    "value": "$settings.instruction",
+                    "onChangeAction": {
+                      "action": "updateSetting",
+                      "params": { "key": "instruction", "value": "$value" }
+                    }
+                  },
+                  {
+                    "component": "Label",
+                    "text": "This instruction is included in every reminder sent to Stina.",
+                    "style": { "font-size": "0.85em", "opacity": "0.7" }
+                  },
+                  {
+                    "component": "TextInput",
+                    "label": "Event Creation Instruction",
+                    "placeholder": "E.g. Put private events in account X, work events in Y",
+                    "value": "$settings.eventInstruction",
+                    "onChangeAction": {
+                      "action": "updateSetting",
+                      "params": { "key": "eventInstruction", "value": "$value" }
+                    }
+                  },
+                  {
+                    "component": "Label",
+                    "text": "This instruction is included when Stina creates new calendar events.",
+                    "style": { "font-size": "0.85em", "opacity": "0.7" }
+                  }
+                ]
+              },
+              {
+                "component": "Label",
+                "text": "Accounts",
+                "style": { "font-weight": "bold", "font-size": "1.1em" }
+              },
               {
                 "component": "VerticalStack",
                 "gap": 0.5,
@@ -347,71 +407,6 @@
                     }
                   ]
                 }
-              }
-            ]
-          }
-        }
-      },
-      {
-        "id": "calendar-settings",
-        "title": "Calendar Settings",
-        "description": "Global settings for calendar reminders.",
-        "view": {
-          "kind": "component",
-          "data": {
-            "settings": {
-              "action": "getSettings",
-              "refreshOn": ["calendar.settings.changed"]
-            }
-          },
-          "content": {
-            "component": "VerticalStack",
-            "gap": 1,
-            "children": [
-              {
-                "component": "TextInput",
-                "label": "Reminder Minutes Before Event",
-                "placeholder": "15",
-                "value": "$settings.reminderMinutes",
-                "onChangeAction": {
-                  "action": "updateSetting",
-                  "params": { "key": "reminderMinutes", "value": "$value" }
-                }
-              },
-              {
-                "component": "Label",
-                "text": "How many minutes before an event should Stina remind you.",
-                "style": { "font-size": "0.85em", "opacity": "0.7" }
-              },
-              {
-                "component": "TextInput",
-                "label": "Reminder Instruction",
-                "placeholder": "Remind me briefly about the upcoming event",
-                "value": "$settings.instruction",
-                "onChangeAction": {
-                  "action": "updateSetting",
-                  "params": { "key": "instruction", "value": "$value" }
-                }
-              },
-              {
-                "component": "Label",
-                "text": "This instruction is included in every reminder sent to Stina.",
-                "style": { "font-size": "0.85em", "opacity": "0.7" }
-              },
-              {
-                "component": "TextInput",
-                "label": "Event Creation Instruction",
-                "placeholder": "E.g. Put private events in account X, work events in Y",
-                "value": "$settings.eventInstruction",
-                "onChangeAction": {
-                  "action": "updateSetting",
-                  "params": { "key": "eventInstruction", "value": "$value" }
-                }
-              },
-              {
-                "component": "Label",
-                "text": "This instruction is included when Stina creates new calendar events.",
-                "style": { "font-size": "0.85em", "opacity": "0.7" }
               }
             ]
           }
