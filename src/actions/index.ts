@@ -6,6 +6,7 @@ import type { ExecutionContext } from '@stina/extension-api/runtime'
 import { CalendarRepository, ExtensionRepository } from '../db/repository.js'
 import { ProviderRegistry, getProviderLabel } from '../providers/index.js'
 import { getEditState, deleteEditState, type EditFormState } from '../edit-state.js'
+import { getEventDetailState, deleteEventDetailState } from '../event-detail-state.js'
 import type { AccountDisplayData, CalendarProvider } from '../types.js'
 import {
   initiateGoogleCalendarAuth,
@@ -32,6 +33,7 @@ export interface ActionDeps {
   emitSettingsChanged: () => void
   emitEditChanged: () => void
   emitEventChanged: () => void
+  emitEventDetailChanged: () => void
   startWorkerForUser: (userId: string) => Promise<void>
   triggerImmediateSync: (execContext: ExecutionContext) => Promise<void>
   log: {
@@ -681,6 +683,99 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
             error: error instanceof Error ? error.message : String(error),
           }
         }
+      },
+    }),
+
+    // Get event detail modal state
+    actionsApi.register({
+      id: 'getEventDetailState',
+      async execute(_params, execContext) {
+        if (!execContext.userId) {
+          return { success: false, error: 'User context required' }
+        }
+
+        return { success: true, data: getEventDetailState(execContext.userId) }
+      },
+    }),
+
+    // Open event detail modal
+    actionsApi.register({
+      id: 'openEventDetail',
+      async execute(params, execContext) {
+        if (!execContext.userId) {
+          return { success: false, error: 'User context required' }
+        }
+
+        const eventId = params.eventId as string
+
+        try {
+          const userRepo = createUserRepository(execContext)
+          const event = await userRepo.events.get(eventId)
+
+          if (!event) {
+            return { success: false, error: 'Event not found' }
+          }
+
+          const account = await userRepo.accounts.get(event.accountId)
+          const calendarName = account?.calendars.find((c) => c.id === event.calendarId)?.name || ''
+
+          // Format time display
+          let formattedTime: string
+          if (event.allDay) {
+            formattedTime = 'All day'
+          } else {
+            const start = new Date(event.startAt)
+            const end = new Date(event.endAt)
+            const dateStr = start.toLocaleDateString('sv-SE', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            })
+            const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+            const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+            formattedTime = `${dateStr}, ${startTime} – ${endTime}`
+          }
+
+          const state = getEventDetailState(execContext.userId)
+          state.showModal = true
+          state.event = {
+            id: event.id,
+            title: event.title,
+            formattedTime,
+            allDay: event.allDay,
+            location: event.location,
+            description: event.description,
+            accountName: account?.name || 'Unknown',
+            calendarName,
+            organizer: event.organizer,
+            attendeesText: event.attendees.join(', '),
+            responseStatus: event.responseStatus,
+          }
+
+          deps.emitEventDetailChanged()
+          return { success: true }
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        }
+      },
+    }),
+
+    // Close event detail modal
+    actionsApi.register({
+      id: 'closeEventDetail',
+      async execute(_params, execContext) {
+        if (!execContext.userId) {
+          return { success: false, error: 'User context required' }
+        }
+
+        const state = getEventDetailState(execContext.userId)
+        state.showModal = false
+        deleteEventDetailState(execContext.userId)
+        deps.emitEventDetailChanged()
+        return { success: true }
       },
     }),
   ]

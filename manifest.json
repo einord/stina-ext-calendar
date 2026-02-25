@@ -2,7 +2,7 @@
   "$schema": "https://stina.app/schemas/extension-manifest.json",
   "id": "calendar-manager",
   "name": "Calendar Manager",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Subscribe to calendars (iCal, Google, iCloud, Outlook, CalDAV), view upcoming events, and get AI-driven reminders.",
   "type": "tools",
   "author": {
@@ -14,9 +14,12 @@
   "engines": {
     "stina": ">=0.5.0"
   },
-  "platforms": ["web", "electron", "tui"],
+  "platforms": [
+    "web",
+    "electron",
+    "tui"
+  ],
   "main": "index.js",
-
   "permissions": [
     "tools.register",
     "actions.register",
@@ -30,14 +33,30 @@
     "network:*",
     "user.profile.read"
   ],
-
   "contributes": {
     "storage": {
       "collections": {
-        "accounts": { "indexes": ["provider", "enabled"] },
-        "events": { "indexes": ["accountId", "startAt", "endAt", "calendarId", "responseStatus"] },
+        "accounts": {
+          "indexes": [
+            "provider",
+            "enabled"
+          ]
+        },
+        "events": {
+          "indexes": [
+            "accountId",
+            "startAt",
+            "endAt",
+            "calendarId",
+            "responseStatus"
+          ]
+        },
         "settings": {},
-        "syncState": { "indexes": ["accountId"] },
+        "syncState": {
+          "indexes": [
+            "accountId"
+          ]
+        },
         "users": {}
       }
     },
@@ -78,15 +97,21 @@
           "data": {
             "settings": {
               "action": "getSettings",
-              "refreshOn": ["calendar.settings.changed"]
+              "refreshOn": [
+                "calendar.settings.changed"
+              ]
             },
             "accounts": {
               "action": "getAccounts",
-              "refreshOn": ["calendar.account.changed"]
+              "refreshOn": [
+                "calendar.account.changed"
+              ]
             },
             "editState": {
               "action": "getEditState",
-              "refreshOn": ["calendar.edit.changed"]
+              "refreshOn": [
+                "calendar.edit.changed"
+              ]
             }
           },
           "content": {
@@ -104,13 +129,19 @@
                     "value": "$settings.reminderMinutes",
                     "onChangeAction": {
                       "action": "updateSetting",
-                      "params": { "key": "reminderMinutes", "value": "$value" }
+                      "params": {
+                        "key": "reminderMinutes",
+                        "value": "$value"
+                      }
                     }
                   },
                   {
                     "component": "Label",
                     "text": "How many minutes before an event should Stina remind you.",
-                    "style": { "font-size": "0.85em", "opacity": "0.7" }
+                    "style": {
+                      "font-size": "0.85em",
+                      "opacity": "0.7"
+                    }
                   },
                   {
                     "component": "TextInput",
@@ -119,13 +150,19 @@
                     "value": "$settings.instruction",
                     "onChangeAction": {
                       "action": "updateSetting",
-                      "params": { "key": "instruction", "value": "$value" }
+                      "params": {
+                        "key": "instruction",
+                        "value": "$value"
+                      }
                     }
                   },
                   {
                     "component": "Label",
                     "text": "This instruction is included in every reminder sent to Stina.",
-                    "style": { "font-size": "0.85em", "opacity": "0.7" }
+                    "style": {
+                      "font-size": "0.85em",
+                      "opacity": "0.7"
+                    }
                   },
                   {
                     "component": "TextInput",
@@ -134,20 +171,29 @@
                     "value": "$settings.eventInstruction",
                     "onChangeAction": {
                       "action": "updateSetting",
-                      "params": { "key": "eventInstruction", "value": "$value" }
+                      "params": {
+                        "key": "eventInstruction",
+                        "value": "$value"
+                      }
                     }
                   },
                   {
                     "component": "Label",
                     "text": "This instruction is included when Stina creates new calendar events.",
-                    "style": { "font-size": "0.85em", "opacity": "0.7" }
+                    "style": {
+                      "font-size": "0.85em",
+                      "opacity": "0.7"
+                    }
                   }
                 ]
               },
               {
                 "component": "Label",
                 "text": "Accounts",
-                "style": { "font-weight": "bold", "font-size": "1.1em" }
+                "style": {
+                  "font-weight": "bold",
+                  "font-size": "1.1em"
+                }
               },
               {
                 "component": "VerticalStack",
@@ -163,7 +209,10 @@
                         {
                           "component": "HorizontalStack",
                           "gap": 0.5,
-                          "style": { "align-items": "center", "justify-content": "space-between" },
+                          "style": {
+                            "align-items": "center",
+                            "justify-content": "space-between"
+                          },
                           "children": [
                             {
                               "component": "VerticalStack",
@@ -176,7 +225,10 @@
                                 {
                                   "component": "Label",
                                   "text": "$account.providerLabel",
-                                  "style": { "font-size": "0.85em", "opacity": "0.7" }
+                                  "style": {
+                                    "font-size": "0.85em",
+                                    "opacity": "0.7"
+                                  }
                                 }
                               ]
                             },
@@ -195,7 +247,9 @@
                                   "tooltip": "Edit account",
                                   "onClickAction": {
                                     "action": "editAccount",
-                                    "params": { "id": "$account.id" }
+                                    "params": {
+                                      "id": "$account.id"
+                                    }
                                   }
                                 },
                                 {
@@ -205,7 +259,9 @@
                                   "type": "danger",
                                   "onClickAction": {
                                     "action": "deleteAccount",
-                                    "params": { "id": "$account.id" }
+                                    "params": {
+                                      "id": "$account.id"
+                                    }
                                   }
                                 }
                               ]
@@ -215,20 +271,27 @@
                         {
                           "component": "VerticalStack",
                           "gap": 0.25,
-                          "style": { "padding-left": "0.5em" },
+                          "style": {
+                            "padding-left": "0.5em"
+                          },
                           "children": {
                             "each": "$account.calendars",
                             "as": "cal",
-                            "items": [{
-                              "component": "Checkbox",
-                              "label": "$cal.name",
-                              "checked": "$cal.enabled",
-                              "strikethrough": false,
-                              "onChangeAction": {
-                                "action": "toggleCalendar",
-                                "params": { "accountId": "$account.id", "calendarId": "$cal.id" }
+                            "items": [
+                              {
+                                "component": "Checkbox",
+                                "label": "$cal.name",
+                                "checked": "$cal.enabled",
+                                "strikethrough": false,
+                                "onChangeAction": {
+                                  "action": "toggleCalendar",
+                                  "params": {
+                                    "accountId": "$account.id",
+                                    "calendarId": "$cal.id"
+                                  }
+                                }
                               }
-                            }]
+                            ]
                           }
                         }
                       ]
@@ -257,23 +320,44 @@
                       "value": "$editState.form.name",
                       "onChangeAction": {
                         "action": "updateFormField",
-                        "params": { "field": "name", "value": "$value" }
+                        "params": {
+                          "field": "name",
+                          "value": "$value"
+                        }
                       }
                     },
                     {
                       "component": "Select",
                       "label": "Provider",
                       "options": [
-                        { "label": "iCal URL", "value": "ical" },
-                        { "label": "Google Calendar", "value": "google" },
-                        { "label": "iCloud", "value": "icloud" },
-                        { "label": "Outlook", "value": "outlook" },
-                        { "label": "CalDAV", "value": "caldav" }
+                        {
+                          "label": "iCal URL",
+                          "value": "ical"
+                        },
+                        {
+                          "label": "Google Calendar",
+                          "value": "google"
+                        },
+                        {
+                          "label": "iCloud",
+                          "value": "icloud"
+                        },
+                        {
+                          "label": "Outlook",
+                          "value": "outlook"
+                        },
+                        {
+                          "label": "CalDAV",
+                          "value": "caldav"
+                        }
                       ],
                       "selectedValue": "$editState.form.provider",
                       "onChangeAction": {
                         "action": "updateFormField",
-                        "params": { "field": "provider", "value": "$value" }
+                        "params": {
+                          "field": "provider",
+                          "value": "$value"
+                        }
                       }
                     },
                     {
@@ -287,7 +371,10 @@
                           "value": "$editState.form.url",
                           "onChangeAction": {
                             "action": "updateFormField",
-                            "params": { "field": "url", "value": "$value" }
+                            "params": {
+                              "field": "url",
+                              "value": "$value"
+                            }
                           }
                         }
                       ]
@@ -322,12 +409,19 @@
                                 {
                                   "component": "Label",
                                   "text": "$editState.oauthUrl",
-                                  "style": { "font-family": "monospace", "word-break": "break-all" }
+                                  "style": {
+                                    "font-family": "monospace",
+                                    "word-break": "break-all"
+                                  }
                                 },
                                 {
                                   "component": "Label",
                                   "text": "$editState.oauthCode",
-                                  "style": { "font-size": "1.5em", "font-weight": "bold", "text-align": "center" }
+                                  "style": {
+                                    "font-size": "1.5em",
+                                    "font-weight": "bold",
+                                    "text-align": "center"
+                                  }
                                 }
                               ]
                             }
@@ -361,7 +455,10 @@
                               "value": "$editState.form.url",
                               "onChangeAction": {
                                 "action": "updateFormField",
-                                "params": { "field": "url", "value": "$value" }
+                                "params": {
+                                  "field": "url",
+                                  "value": "$value"
+                                }
                               }
                             }
                           ]
@@ -373,7 +470,10 @@
                           "value": "$editState.form.username",
                           "onChangeAction": {
                             "action": "updateFormField",
-                            "params": { "field": "username", "value": "$value" }
+                            "params": {
+                              "field": "username",
+                              "value": "$value"
+                            }
                           }
                         },
                         {
@@ -383,7 +483,10 @@
                           "value": "$editState.form.password",
                           "onChangeAction": {
                             "action": "updateFormField",
-                            "params": { "field": "password", "value": "$value" }
+                            "params": {
+                              "field": "password",
+                              "value": "$value"
+                            }
                           }
                         }
                       ]
@@ -393,7 +496,9 @@
                 "footer": {
                   "component": "HorizontalStack",
                   "gap": 0.5,
-                  "style": { "justify-content": "flex-end" },
+                  "style": {
+                    "justify-content": "flex-end"
+                  },
                   "children": [
                     {
                       "component": "Button",
@@ -423,61 +528,224 @@
           "data": {
             "events": {
               "action": "getUpcomingEvents",
-              "refreshOn": ["calendar.event.changed", "calendar.account.changed"]
+              "refreshOn": [
+                "calendar.event.changed",
+                "calendar.account.changed"
+              ]
+            },
+            "eventDetail": {
+              "action": "getEventDetailState",
+              "refreshOn": [
+                "calendar.eventDetail.changed"
+              ]
             }
           },
           "content": {
             "component": "VerticalStack",
             "gap": 1,
-            "children": {
-              "each": "$events",
-              "as": "group",
-              "items": [
-                {
-                  "component": "Frame",
-                  "title": "$group.label",
-                  "children": [
+            "children": [
+              {
+                "component": "VerticalStack",
+                "gap": 1,
+                "children": {
+                  "each": "$events",
+                  "as": "group",
+                  "items": [
                     {
-                      "component": "VerticalStack",
-                      "gap": 0.25,
-                      "children": {
-                        "each": "$group.events",
-                        "as": "event",
-                        "items": [
-                          {
-                            "component": "HorizontalStack",
-                            "gap": 0.5,
-                            "style": { "align-items": "center" },
-                            "children": [
+                      "component": "Frame",
+                      "title": "$group.label",
+                      "children": [
+                        {
+                          "component": "VerticalStack",
+                          "gap": 0.25,
+                          "children": {
+                            "each": "$group.events",
+                            "as": "event",
+                            "items": [
                               {
-                                "component": "Pill",
-                                "text": "$event.time",
-                                "variant": "default"
-                              },
-                              {
-                                "component": "VerticalStack",
-                                "gap": 0.1,
+                                "component": "HorizontalStack",
+                                "gap": 0.5,
+                                "style": {
+                                  "align-items": "flex-start"
+                                },
                                 "children": [
                                   {
-                                    "component": "Label",
-                                    "text": "$event.title"
+                                    "component": "VerticalStack",
+                                    "gap": 0.1,
+                                    "style": {
+                                      "flex": "1"
+                                    },
+                                    "children": [
+                                      {
+                                        "component": "HorizontalStack",
+                                        "gap": 0.5,
+                                        "style": {
+                                          "align-items": "center"
+                                        },
+                                        "children": [
+                                          {
+                                            "component": "Label",
+                                            "text": "$event.time",
+                                            "style": {
+                                              "font-weight": "600",
+                                              "opacity": "0.7",
+                                              "font-size": "0.9em",
+                                              "min-width": "3.5em"
+                                            }
+                                          },
+                                          {
+                                            "component": "Label",
+                                            "text": "$event.title"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "component": "Label",
+                                        "text": "$event.location",
+                                        "style": {
+                                          "font-size": "0.8em",
+                                          "opacity": "0.6"
+                                        }
+                                      }
+                                    ]
                                   },
                                   {
-                                    "component": "Label",
-                                    "text": "$event.location",
-                                    "style": { "font-size": "0.8em", "opacity": "0.6" }
+                                    "component": "IconButton",
+                                    "icon": "information-circle",
+                                    "tooltip": "Event details",
+                                    "onClickAction": {
+                                      "action": "openEventDetail",
+                                      "params": {
+                                        "eventId": "$event.id"
+                                      }
+                                    }
                                   }
                                 ]
                               }
                             ]
                           }
-                        ]
-                      }
+                        }
+                      ]
                     }
                   ]
                 }
-              ]
-            }
+              },
+              {
+                "component": "Modal",
+                "title": "$eventDetail.event.title",
+                "open": "$eventDetail.showModal",
+                "onCloseAction": "closeEventDetail",
+                "body": {
+                  "component": "VerticalStack",
+                  "gap": 1,
+                  "children": [
+                    {
+                      "component": "Label",
+                      "text": "$eventDetail.event.formattedTime",
+                      "style": {
+                        "font-weight": "600"
+                      }
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$eventDetail.event.location",
+                      "children": [
+                        {
+                          "component": "Label",
+                          "text": "$eventDetail.event.location"
+                        }
+                      ]
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$eventDetail.event.description",
+                      "children": [
+                        {
+                          "component": "VerticalStack",
+                          "gap": 0.25,
+                          "children": [
+                            {
+                              "component": "Label",
+                              "text": "Description",
+                              "style": {
+                                "font-weight": "600",
+                                "font-size": "0.85em",
+                                "opacity": "0.7"
+                              }
+                            },
+                            {
+                              "component": "Paragraph",
+                              "text": "$eventDetail.event.description"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "component": "Label",
+                      "text": "$eventDetail.event.accountName",
+                      "style": {
+                        "font-size": "0.85em",
+                        "opacity": "0.7"
+                      }
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$eventDetail.event.organizer",
+                      "children": [
+                        {
+                          "component": "VerticalStack",
+                          "gap": 0.25,
+                          "children": [
+                            {
+                              "component": "Label",
+                              "text": "Organizer",
+                              "style": {
+                                "font-weight": "600",
+                                "font-size": "0.85em",
+                                "opacity": "0.7"
+                              }
+                            },
+                            {
+                              "component": "Label",
+                              "text": "$eventDetail.event.organizer"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "component": "ConditionalGroup",
+                      "condition": "$eventDetail.event.attendeesText",
+                      "children": [
+                        {
+                          "component": "VerticalStack",
+                          "gap": 0.25,
+                          "children": [
+                            {
+                              "component": "Label",
+                              "text": "Attendees",
+                              "style": {
+                                "font-weight": "600",
+                                "font-size": "0.85em",
+                                "opacity": "0.7"
+                              }
+                            },
+                            {
+                              "component": "Label",
+                              "text": "$eventDetail.event.attendeesText",
+                              "style": {
+                                "font-size": "0.9em"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
           }
         }
       }

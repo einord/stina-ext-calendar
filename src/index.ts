@@ -32,6 +32,7 @@ import { registerActions } from './actions/index.js'
 import { syncAllAccountsWithContext } from './sync.js'
 import { createCalendarWorkerManager } from './worker.js'
 import { clearAllEditStates } from './edit-state.js'
+import { clearAllEventDetailStates } from './event-detail-state.js'
 import type { CredentialRefreshConfig } from './credentials.js'
 import type { ChatAPI, UserAPI } from './shared-deps.js'
 
@@ -97,6 +98,11 @@ async function activate(context: ExtensionContext): Promise<Disposable> {
     void eventsApi.emit('calendar.event.changed', { at: new Date().toISOString() })
   }
 
+  const emitEventDetailChanged = () => {
+    if (!eventsApi) return
+    void eventsApi.emit('calendar.eventDetail.changed', { at: new Date().toISOString() })
+  }
+
   // Load OAuth configuration from settings
   const loadProviderConfig = async (): Promise<void> => {
     if (!settingsApi) return
@@ -159,6 +165,7 @@ async function activate(context: ExtensionContext): Promise<Disposable> {
         emitSettingsChanged,
         emitEditChanged,
         emitEventChanged,
+        emitEventDetailChanged,
         startWorkerForUser: workerManager.startWorkerForUser,
         triggerImmediateSync: (execContext) => syncAllAccountsWithContext(execContext, syncDeps),
         log: context.log,
@@ -220,6 +227,9 @@ async function activate(context: ExtensionContext): Promise<Disposable> {
           'getSettings',
           'updateSetting',
           'getUpcomingEvents',
+          'getEventDetailState',
+          'openEventDetail',
+          'closeEventDetail',
         ]
       : [],
   })
@@ -242,6 +252,7 @@ async function activate(context: ExtensionContext): Promise<Disposable> {
     dispose: () => {
       workerManager.stopAll()
       clearAllEditStates()
+      clearAllEventDetailStates()
       for (const disposable of disposables) {
         disposable.dispose()
       }
