@@ -20,7 +20,7 @@ export interface SyncDeps {
   emitEventChanged?: () => void
 }
 
-const SYNC_INTERVAL_MS = 10 * 60 * 1000 // Sync every 10 minutes
+const _SYNC_INTERVAL_MS = 10 * 60 * 1000 // Sync every 10 minutes
 
 /**
  * Sync events for a single account.
@@ -59,6 +59,11 @@ export async function syncAccountEvents(
       syncState?.syncToken
     )
 
+    // On full sync, delete all existing events for this account to clean up orphaned records
+    if (syncResult.fullSync) {
+      await userRepo.events.deleteByAccount(account.id)
+    }
+
     // Upsert events in local cache
     for (const event of syncResult.events) {
       await userRepo.events.upsertByUid(account.id, {
@@ -74,6 +79,7 @@ export async function syncAccountEvents(
         recurrenceRule: event.recurrenceRule,
         organizer: event.organizer,
         attendees: event.attendees,
+        responseStatus: event.responseStatus ?? null,
         remoteUrl: event.remoteUrl,
         etag: event.etag,
         rawIcs: event.rawIcs,

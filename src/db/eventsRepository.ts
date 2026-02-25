@@ -30,6 +30,7 @@ interface EventDocument {
   recurrenceRule: string | null
   organizer: string | null
   attendees: string[]
+  responseStatus: string | null
   remoteUrl: string | null
   etag: string | null
   rawIcs: string | null
@@ -63,6 +64,9 @@ export class EventsRepository {
     if (to) {
       filtered = filtered.filter(d => d.startAt <= to)
     }
+
+    // Exclude declined events
+    filtered = filtered.filter(d => d.responseStatus !== 'declined')
 
     return filtered.slice(offset, offset + limit).map(this.toCalendarEvent)
   }
@@ -101,6 +105,7 @@ export class EventsRepository {
         recurrenceRule: event.recurrenceRule,
         organizer: event.organizer,
         attendees: event.attendees,
+        responseStatus: event.responseStatus ?? null,
         remoteUrl: event.remoteUrl,
         etag: event.etag,
         rawIcs: event.rawIcs,
@@ -127,6 +132,7 @@ export class EventsRepository {
       recurrenceRule: event.recurrenceRule,
       organizer: event.organizer,
       attendees: event.attendees,
+      responseStatus: event.responseStatus ?? null,
       remoteUrl: event.remoteUrl,
       etag: event.etag,
       rawIcs: event.rawIcs,
@@ -168,6 +174,7 @@ export class EventsRepository {
       recurrenceRule: doc.recurrenceRule,
       organizer: doc.organizer,
       attendees: doc.attendees,
+      responseStatus: (doc.responseStatus as CalendarEvent['responseStatus']) ?? null,
       remoteUrl: doc.remoteUrl,
       etag: doc.etag,
       rawIcs: doc.rawIcs,

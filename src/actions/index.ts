@@ -2,11 +2,11 @@
  * Calendar Extension UI action registrations.
  */
 
-import type { ExecutionContext, StorageAPI, SecretsAPI } from '@stina/extension-api/runtime'
+import type { ExecutionContext } from '@stina/extension-api/runtime'
 import { CalendarRepository, ExtensionRepository } from '../db/repository.js'
-import { ProviderRegistry, getProviderLabel, type ProviderConfig } from '../providers/index.js'
+import { ProviderRegistry, getProviderLabel } from '../providers/index.js'
 import { getEditState, deleteEditState, type EditFormState } from '../edit-state.js'
-import type { AccountDisplayData, CalendarProvider, UpcomingEvent } from '../types.js'
+import type { AccountDisplayData, CalendarProvider } from '../types.js'
 import {
   initiateGoogleCalendarAuth,
   initiateOutlookCalendarAuth,

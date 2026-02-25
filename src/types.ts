@@ -5,6 +5,8 @@
 /**
  * Supported calendar providers
  */
+export type EventResponseStatus = 'accepted' | 'declined' | 'tentative' | 'needsAction'
+
 export type CalendarProvider = 'ical' | 'google' | 'icloud' | 'outlook' | 'caldav'
 
 /**
@@ -95,6 +97,7 @@ export interface CalendarEvent {
   recurrenceRule: string | null
   organizer: string | null
   attendees: string[]
+  responseStatus: EventResponseStatus | null
   remoteUrl: string | null
   etag: string | null
   rawIcs: string | null

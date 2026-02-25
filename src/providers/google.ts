@@ -32,6 +32,16 @@ async function googleFetch(path: string, token: string, options: RequestInit = {
   return response
 }
 
+function mapGoogleResponseStatus(status: string | undefined): 'accepted' | 'declined' | 'tentative' | 'needsAction' | null {
+  switch (status) {
+    case 'accepted': return 'accepted'
+    case 'declined': return 'declined'
+    case 'tentative': return 'tentative'
+    case 'needsAction': return 'needsAction'
+    default: return null
+  }
+}
+
 export class GoogleCalendarProvider implements CalendarProviderInterface {
   readonly supportsWrite = true
 
@@ -93,12 +103,15 @@ export class GoogleCalendarProvider implements CalendarProviderInterface {
           const endAt = item.end?.dateTime || item.end?.date
           if (!startAt) continue
 
+          const selfAttendee = (item.attendees || []).find((a: Record<string, unknown>) => a.self === true)
+          const responseStatus = selfAttendee ? mapGoogleResponseStatus(selfAttendee.responseStatus as string) : null
+
           const now = new Date().toISOString()
           allEvents.push({
             id: '',
             accountId: account.id,
             calendarId: cal.id,
-            uid: item.iCalUID || item.id,
+            uid: item.id,
             title: item.summary || '(No title)',
             description: item.description || null,
             location: item.location || null,
@@ -108,6 +121,7 @@ export class GoogleCalendarProvider implements CalendarProviderInterface {
             recurrenceRule: null,
             organizer: item.organizer?.email || null,
             attendees: (item.attendees || []).map((a: Record<string, string>) => a.email),
+            responseStatus,
             remoteUrl: item.htmlLink || null,
             etag: item.etag || null,
             rawIcs: null,
@@ -178,6 +192,7 @@ export class GoogleCalendarProvider implements CalendarProviderInterface {
       recurrenceRule: null,
       organizer: item.organizer?.email || null,
       attendees: (item.attendees || []).map((a: Record<string, string>) => a.email),
+      responseStatus: null,
       remoteUrl: item.htmlLink || null,
       etag: item.etag || null,
       rawIcs: null,

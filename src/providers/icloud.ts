@@ -3,7 +3,7 @@
  */
 
 import { CalDavProvider } from './caldav.js'
-import type { CalendarAccount, CalendarCredentials } from '../types.js'
+import type { CalendarAccount, CalendarCredentials, CalendarEventInput, CalendarEventUpdate, CalendarEvent } from '../types.js'
 
 const ICLOUD_CALDAV_URL = 'https://caldav.icloud.com'
 
@@ -29,17 +29,17 @@ export class ICloudProvider extends CalDavProvider {
     return super.syncEvents(icloudAccount, credentials, from, to, syncToken)
   }
 
-  async createEvent(account: CalendarAccount, credentials: CalendarCredentials, input: any) {
+  async createEvent(account: CalendarAccount, credentials: CalendarCredentials, input: CalendarEventInput) {
     const icloudAccount = { ...account, url: account.url || ICLOUD_CALDAV_URL }
     return super.createEvent(icloudAccount, credentials, input)
   }
 
-  async updateEvent(account: CalendarAccount, credentials: CalendarCredentials, eventId: string, update: any, existingEvent: any) {
+  async updateEvent(account: CalendarAccount, credentials: CalendarCredentials, eventId: string, update: CalendarEventUpdate, existingEvent: CalendarEvent) {
     const icloudAccount = { ...account, url: account.url || ICLOUD_CALDAV_URL }
     return super.updateEvent(icloudAccount, credentials, eventId, update, existingEvent)
   }
 
-  async deleteEvent(account: CalendarAccount, credentials: CalendarCredentials, eventId: string, existingEvent: any) {
+  async deleteEvent(account: CalendarAccount, credentials: CalendarCredentials, eventId: string, existingEvent: CalendarEvent) {
     const icloudAccount = { ...account, url: account.url || ICLOUD_CALDAV_URL }
     return super.deleteEvent(icloudAccount, credentials, eventId, existingEvent)
   }

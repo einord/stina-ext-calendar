@@ -32,6 +32,18 @@ async function graphFetch(path: string, token: string, options: RequestInit = {}
   return response
 }
 
+function mapOutlookResponseStatus(status: string | undefined): 'accepted' | 'declined' | 'tentative' | 'needsAction' | null {
+  switch (status) {
+    case 'accepted': return 'accepted'
+    case 'organizer': return 'accepted'
+    case 'declined': return 'declined'
+    case 'tentativelyAccepted': return 'tentative'
+    case 'notResponded':
+    case 'none': return 'needsAction'
+    default: return null
+  }
+}
+
 export class OutlookCalendarProvider implements CalendarProviderInterface {
   readonly supportsWrite = true
 
@@ -91,12 +103,14 @@ export class OutlookCalendarProvider implements CalendarProviderInterface {
         const endAt = item.end?.dateTime ? new Date(item.end.dateTime + 'Z').toISOString() : null
         if (!startAt) continue
 
+        const responseStatus = mapOutlookResponseStatus(item.responseStatus?.response as string | undefined)
+
         const now = new Date().toISOString()
         allEvents.push({
           id: '',
           accountId: account.id,
           calendarId: item.calendar?.id || 'default',
-          uid: item.iCalUId || item.id,
+          uid: item.id,
           title: item.subject || '(No title)',
           description: item.bodyPreview || null,
           location: item.location?.displayName || null,
@@ -106,6 +120,7 @@ export class OutlookCalendarProvider implements CalendarProviderInterface {
           recurrenceRule: null,
           organizer: item.organizer?.emailAddress?.address || null,
           attendees: (item.attendees || []).map((a: Record<string, Record<string, string>>) => a.emailAddress?.address || ''),
+          responseStatus,
           remoteUrl: item.webLink || null,
           etag: item['@odata.etag'] || null,
           rawIcs: null,
@@ -183,6 +198,7 @@ export class OutlookCalendarProvider implements CalendarProviderInterface {
       recurrenceRule: null,
       organizer: null,
       attendees: input.attendees || [],
+      responseStatus: null,
       remoteUrl: item.webLink || null,
       etag: item['@odata.etag'] || null,
       rawIcs: null,

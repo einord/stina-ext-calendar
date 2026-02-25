@@ -3,7 +3,7 @@
  */
 
 import ICAL from 'ical.js'
-import type { CalendarEvent } from '../types.js'
+import type { CalendarEvent, EventResponseStatus } from '../types.js'
 
 /**
  * Parse iCal data and extract events within a date range.
@@ -13,7 +13,8 @@ export function parseICalData(
   accountId: string,
   calendarId: string,
   from: Date,
-  to: Date
+  to: Date,
+  userEmail?: string
 ): Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>[] {
   const jcalData = ICAL.parse(icalData)
   const comp = new ICAL.Component(jcalData)
@@ -36,7 +37,8 @@ export function parseICalData(
 
         if (start > to) break
         if (end >= from) {
-          events.push(buildEvent(vevent, event, uid, accountId, calendarId, start, end))
+          const occurrenceUid = `${uid}_${start.toISOString()}`
+          events.push(buildEvent(vevent, event, occurrenceUid, accountId, calendarId, start, end, userEmail))
         }
 
         next = iterator.next()
@@ -47,7 +49,7 @@ export function parseICalData(
       const end = event.endDate ? event.endDate.toJSDate() : start
 
       if (end >= from && start <= to) {
-        events.push(buildEvent(vevent, event, uid, accountId, calendarId, start, end))
+        events.push(buildEvent(vevent, event, uid, accountId, calendarId, start, end, userEmail))
       }
     }
   }
@@ -62,7 +64,8 @@ function buildEvent(
   accountId: string,
   calendarId: string,
   start: Date,
-  end: Date
+  end: Date,
+  userEmail?: string
 ): Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'> {
   const isAllDay = event.startDate.isDate
 
@@ -78,6 +81,26 @@ function buildEvent(
     return typeof val === 'string' ? val.replace('mailto:', '') : ''
   })
 
+  // Extract RSVP/participation status for the current user
+  let responseStatus: EventResponseStatus | null = null
+  if (userEmail) {
+    const normalizedUserEmail = userEmail.toLowerCase()
+    for (const a of attendeeProps) {
+      const val = a.getFirstValue()
+      const email = typeof val === 'string' ? val.replace('mailto:', '').toLowerCase() : ''
+      if (email === normalizedUserEmail) {
+        const partstat = a.getParameter('partstat')
+        switch (partstat) {
+          case 'ACCEPTED': responseStatus = 'accepted'; break
+          case 'DECLINED': responseStatus = 'declined'; break
+          case 'TENTATIVE': responseStatus = 'tentative'; break
+          case 'NEEDS-ACTION': responseStatus = 'needsAction'; break
+        }
+        break
+      }
+    }
+  }
+
   return {
     accountId,
     calendarId,
@@ -91,6 +114,7 @@ function buildEvent(
     recurrenceRule,
     organizer,
     attendees,
+    responseStatus,
     remoteUrl: null,
     etag: null,
     rawIcs: vevent.toString(),

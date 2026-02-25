@@ -63,6 +63,7 @@ export class CalDavProvider implements CalendarProviderInterface {
     await client.login()
     const calendars = await client.fetchCalendars()
 
+    const userEmail = credentials.type === 'password' ? credentials.username : undefined
     const allEvents: CalendarEvent[] = []
 
     for (const cal of calendars) {
@@ -76,7 +77,7 @@ export class CalDavProvider implements CalendarProviderInterface {
 
       for (const obj of objects) {
         if (!obj.data) continue
-        const parsed = parseICalData(obj.data, account.id, cal.url, from, to)
+        const parsed = parseICalData(obj.data, account.id, cal.url, from, to, userEmail)
         for (const e of parsed) {
           allEvents.push({
             ...e,
@@ -132,6 +133,7 @@ export class CalDavProvider implements CalendarProviderInterface {
       recurrenceRule: null,
       organizer: null,
       attendees: input.attendees || [],
+      responseStatus: null,
       remoteUrl: null,
       etag: null,
       rawIcs: icalData,

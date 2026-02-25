@@ -172,7 +172,7 @@ async function activate(context: ExtensionContext): Promise<Disposable> {
     context.tools!.register(createAddAccountTool(providers)),
     context.tools!.register(createUpdateAccountTool()),
     context.tools!.register(
-      createDeleteAccountTool((accountId) => {
+      createDeleteAccountTool((_accountId) => {
         emitAccountChanged()
       })
     ),

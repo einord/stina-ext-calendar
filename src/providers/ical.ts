@@ -2,7 +2,7 @@
  * iCal URL Calendar Provider (read-only)
  */
 
-import type { CalendarAccount, CalendarCredentials, CalendarEvent, CalendarEventInput, CalendarEventUpdate } from '../types.js'
+import type { CalendarAccount, CalendarCredentials, CalendarEvent } from '../types.js'
 import type { CalendarProviderInterface, RemoteCalendar, SyncResult } from './types.js'
 import { parseICalData } from '../ical/parser.js'
 
