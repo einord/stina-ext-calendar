@@ -13,6 +13,7 @@ interface SettingsDocument {
   id: string
   reminderMinutes: number
   instruction: string
+  eventInstruction: string
   createdAt: string
   updatedAt: string
 }
@@ -34,6 +35,7 @@ export class SettingsRepository {
         userId: '',
         reminderMinutes: doc.reminderMinutes,
         instruction: doc.instruction,
+        eventInstruction: doc.eventInstruction ?? '',
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
       }
@@ -44,6 +46,7 @@ export class SettingsRepository {
       id: settingsId,
       reminderMinutes: 15,
       instruction: '',
+      eventInstruction: '',
       createdAt: now,
       updatedAt: now,
     }
@@ -55,6 +58,7 @@ export class SettingsRepository {
       userId: '',
       reminderMinutes: 15,
       instruction: '',
+      eventInstruction: '',
       createdAt: now,
       updatedAt: now,
     }
@@ -66,11 +70,13 @@ export class SettingsRepository {
 
     const reminderMinutes = update.reminderMinutes ?? settings.reminderMinutes
     const instruction = update.instruction ?? settings.instruction
+    const eventInstruction = update.eventInstruction ?? settings.eventInstruction
 
     const doc: SettingsDocument = {
       id: settings.id,
       reminderMinutes,
       instruction,
+      eventInstruction,
       createdAt: settings.createdAt,
       updatedAt: now,
     }
@@ -81,6 +87,7 @@ export class SettingsRepository {
       ...settings,
       reminderMinutes,
       instruction,
+      eventInstruction,
       updatedAt: now,
     }
   }

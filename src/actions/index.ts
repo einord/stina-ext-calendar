@@ -68,6 +68,7 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
                 ? 'success'
                 : 'default',
             enabled: account.enabled,
+            calendars: account.calendars,
             lastSyncAt: account.lastSyncAt,
             lastError: account.lastError,
           }))
@@ -401,6 +402,7 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
               }
             : { type: 'none' as const },
           enabled: true,
+          calendars: [],
           syncIntervalMs: 600000,
           lastSyncAt: null,
           lastError: null,
@@ -532,6 +534,7 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
             data: {
               reminderMinutes: settings.reminderMinutes,
               instruction: settings.instruction,
+              eventInstruction: settings.eventInstruction,
             },
           }
         } catch (error) {
@@ -561,6 +564,8 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
             await userRepo.settings.update({ reminderMinutes: parseInt(value, 10) })
           } else if (key === 'instruction') {
             await userRepo.settings.update({ instruction: value })
+          } else if (key === 'eventInstruction') {
+            await userRepo.settings.update({ eventInstruction: value })
           }
 
           deps.emitSettingsChanged()
@@ -635,6 +640,41 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
           }
 
           return { success: true, data: groups }
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        }
+      },
+    }),
+
+    // Toggle calendar enabled state
+    actionsApi.register({
+      id: 'toggleCalendar',
+      async execute(params, execContext) {
+        if (!execContext.userId) {
+          return { success: false, error: 'User context required' }
+        }
+
+        const accountId = params.accountId as string
+        const calendarId = params.calendarId as string
+
+        try {
+          const userRepo = createUserRepository(execContext)
+          const account = await userRepo.accounts.get(accountId)
+
+          if (!account) {
+            return { success: false, error: 'Account not found' }
+          }
+
+          const updatedCalendars = account.calendars.map((cal) =>
+            cal.id === calendarId ? { ...cal, enabled: !cal.enabled } : cal
+          )
+
+          await userRepo.accounts.updateCalendars(accountId, updatedCalendars)
+          deps.emitAccountChanged()
+          return { success: true }
         } catch (error) {
           return {
             success: false,

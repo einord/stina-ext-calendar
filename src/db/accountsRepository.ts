@@ -10,6 +10,7 @@ import type {
   ListAccountsOptions,
   AuthType,
   CalendarProvider,
+  CalendarAccountCalendar,
 } from '../types.js'
 
 const COLLECTIONS = {
@@ -38,6 +39,7 @@ interface AccountDocument {
   lastError: string | null
   createdAt: string
   updatedAt: string
+  calendars?: Array<{ id: string; name: string; color?: string; enabled: boolean }>
 }
 
 export class AccountsRepository {
@@ -193,6 +195,14 @@ export class AccountsRepository {
     await this.saveCredentials(id, credentials)
   }
 
+  async updateCalendars(id: string, calendars: CalendarAccountCalendar[]): Promise<void> {
+    const doc = await this.storage.get<AccountDocument>(COLLECTIONS.accounts, id)
+    if (!doc) return
+
+    const now = new Date().toISOString()
+    await this.storage.put(COLLECTIONS.accounts, id, { ...doc, calendars, updatedAt: now })
+  }
+
   private async saveCredentials(accountId: string, credentials: CalendarCredentials): Promise<void> {
     const key = getCredentialsKey(accountId)
     await this.secrets.set(key, JSON.stringify(credentials))
@@ -230,6 +240,7 @@ export class AccountsRepository {
       lastError: doc.lastError,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+      calendars: doc.calendars ?? [],
     }
   }
 }

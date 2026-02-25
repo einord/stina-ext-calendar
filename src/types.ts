@@ -17,6 +17,13 @@ export type AuthType = 'none' | 'password' | 'oauth2'
 /**
  * Calendar account configuration
  */
+export interface CalendarAccountCalendar {
+  id: string
+  name: string
+  color?: string
+  enabled: boolean
+}
+
 export interface CalendarAccount {
   id: string
   userId: string
@@ -26,6 +33,7 @@ export interface CalendarAccount {
   authType: AuthType
   credentials: CalendarCredentials
   enabled: boolean
+  calendars: CalendarAccountCalendar[]
   syncIntervalMs: number
   lastSyncAt: string | null
   lastError: string | null
@@ -141,6 +149,7 @@ export interface CalendarSettings {
   userId: string
   reminderMinutes: number
   instruction: string
+  eventInstruction: string
   createdAt: string
   updatedAt: string
 }
@@ -151,6 +160,7 @@ export interface CalendarSettings {
 export interface CalendarSettingsUpdate {
   reminderMinutes?: number
   instruction?: string
+  eventInstruction?: string
 }
 
 /**
@@ -209,6 +219,7 @@ export interface AccountDisplayData {
   providerLabel: string
   statusVariant: 'default' | 'success' | 'warning' | 'danger'
   enabled: boolean
+  calendars: CalendarAccountCalendar[]
   lastSyncAt: string | null
   lastError: string | null
 }

@@ -66,17 +66,23 @@ export function createListAccountsTool(): Tool {
           name: account.name,
           url: account.url,
           enabled: account.enabled,
+          calendars: account.calendars,
           lastSyncAt: account.lastSyncAt,
           lastError: account.lastError,
           createdAt: account.createdAt,
           updatedAt: account.updatedAt,
         }))
 
+        // Include event creation instruction if configured
+        const settings = await repository.settings.get()
+        const note = settings.eventInstruction || undefined
+
         return {
           success: true,
           data: {
             accounts: safeAccounts,
             count: safeAccounts.length,
+            ...(note ? { note } : {}),
           },
         }
       } catch (error) {

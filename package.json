@@ -1,6 +1,6 @@
 {
   "name": "stina-ext-calendar",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Calendar extension for Stina - subscribe to calendars, view upcoming events, and get AI-driven reminders",
   "type": "module",
   "main": "dist/index.js",

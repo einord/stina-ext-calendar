@@ -59,13 +59,37 @@ export async function syncAccountEvents(
       syncState?.syncToken
     )
 
+    // Fetch and merge calendar list
+    try {
+      const remoteCalendars = await provider.listCalendars(account, credentials)
+      const existingMap = new Map(account.calendars.map(c => [c.id, c]))
+      const mergedCalendars = remoteCalendars.map(rc => ({
+        id: rc.id,
+        name: rc.name,
+        color: rc.color,
+        enabled: existingMap.get(rc.id)?.enabled ?? true,
+      }))
+      await userRepo.accounts.updateCalendars(account.id, mergedCalendars)
+    } catch {
+      // Non-fatal: calendar list fetch may fail for some providers
+    }
+
     // On full sync, delete all existing events for this account to clean up orphaned records
     if (syncResult.fullSync) {
       await userRepo.events.deleteByAccount(account.id)
     }
 
+
+    // Filter events by enabled calendars
+    const enabledCalendarIds = new Set(
+      account.calendars.filter(c => c.enabled).map(c => c.id)
+    )
+    const filteredEvents = enabledCalendarIds.size > 0
+      ? syncResult.events.filter(e => enabledCalendarIds.has(e.calendarId))
+      : syncResult.events
+
     // Upsert events in local cache
-    for (const event of syncResult.events) {
+    for (const event of filteredEvents) {
       await userRepo.events.upsertByUid(account.id, {
         accountId: account.id,
         calendarId: event.calendarId,
