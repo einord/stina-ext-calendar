@@ -754,7 +754,8 @@
       {
         "id": "cal_accounts_list",
         "name": "List Calendar Accounts",
-        "description": "List configured calendar accounts."
+        "description": "List configured calendar accounts.",
+        "requiresConfirmation": false
       },
       {
         "id": "cal_accounts_add",
@@ -774,17 +775,20 @@
       {
         "id": "cal_accounts_test",
         "name": "Test Calendar Account",
-        "description": "Test connection to a calendar account."
+        "description": "Test connection to a calendar account.",
+        "requiresConfirmation": false
       },
       {
         "id": "cal_events_list",
         "name": "List Calendar Events",
-        "description": "List calendar events within a date range."
+        "description": "List calendar events within a date range.",
+        "requiresConfirmation": false
       },
       {
         "id": "cal_events_get",
         "name": "Get Calendar Event",
-        "description": "Get details of a specific calendar event."
+        "description": "Get details of a specific calendar event.",
+        "requiresConfirmation": false
       },
       {
         "id": "cal_events_create",
@@ -807,17 +811,20 @@
       {
         "id": "cal_events_sync",
         "name": "Sync Calendar Events",
-        "description": "Force sync of calendar events from all accounts."
+        "description": "Force sync of calendar events from all accounts.",
+        "requiresConfirmation": false
       },
       {
         "id": "cal_settings_get",
         "name": "Get Calendar Settings",
-        "description": "Get current calendar settings."
+        "description": "Get current calendar settings.",
+        "requiresConfirmation": false
       },
       {
         "id": "cal_settings_update",
         "name": "Update Calendar Settings",
-        "description": "Update calendar settings such as reminder time and instruction."
+        "description": "Update calendar settings such as reminder time and instruction.",
+        "requiresConfirmation": false
       }
     ],
     "prompts": [
