@@ -78,8 +78,9 @@ export function createUpdateSettingsTool(
       type: 'object',
       properties: {
         reminderMinutes: {
-          type: 'number',
-          description: 'How many minutes before an event to send a reminder',
+          type: ['number', 'null'],
+          description:
+            'How many minutes before an event to send a reminder. Pass null to disable reminders.',
         },
         instruction: {
           type: 'string',

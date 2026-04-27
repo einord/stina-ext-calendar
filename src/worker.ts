@@ -87,46 +87,52 @@ export function createCalendarWorkerManager(deps: WorkerDeps) {
             try {
               const userRepo = new CalendarRepository(ctx.userStorage, ctx.userSecrets)
               const settings = await userRepo.settings.get()
-              const now = new Date()
-              const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-              const events = await userRepo.events.getUpcoming(now.toISOString(), in24h.toISOString())
 
-              let earliestFuture = Infinity
+              // Reminders disabled by the user — keep the worker alive but
+              // skip the whole reminder pass; resumes when the setting changes.
+              if (settings.reminderMinutes !== null) {
+                const reminderMinutes = settings.reminderMinutes
+                const now = new Date()
+                const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+                const events = await userRepo.events.getUpcoming(now.toISOString(), in24h.toISOString())
 
-              for (const event of events) {
-                const eventStart = new Date(event.startAt)
-                const reminderTime = new Date(eventStart.getTime() - settings.reminderMinutes * 60 * 1000)
-                const key = `${event.uid}-${event.startAt}`
+                let earliestFuture = Infinity
 
-                if (firedReminders.has(key)) continue
+                for (const event of events) {
+                  const eventStart = new Date(event.startAt)
+                  const reminderTime = new Date(eventStart.getTime() - reminderMinutes * 60 * 1000)
+                  const key = `${event.uid}-${event.startAt}`
 
-                const reminderMs = reminderTime.getTime()
-                const nowMs = now.getTime()
+                  if (firedReminders.has(key)) continue
 
-                if (reminderMs <= nowMs && reminderMs > nowMs - REMINDER_GRACE_MS) {
-                  // Fire now (within grace period)
-                  try {
-                    await fireReminder(
-                      event,
-                      settings,
-                      { chat: deps.chat!, user: deps.user, log: ctx.log },
-                      userId
-                    )
-                    firedReminders.add(key)
-                  } catch (err) {
-                    ctx.log.warn('Failed to fire reminder', {
-                      eventId: event.id,
-                      error: err instanceof Error ? err.message : String(err),
-                    })
+                  const reminderMs = reminderTime.getTime()
+                  const nowMs = now.getTime()
+
+                  if (reminderMs <= nowMs && reminderMs > nowMs - REMINDER_GRACE_MS) {
+                    // Fire now (within grace period)
+                    try {
+                      await fireReminder(
+                        event,
+                        settings,
+                        { chat: deps.chat!, user: deps.user, log: ctx.log },
+                        userId
+                      )
+                      firedReminders.add(key)
+                    } catch (err) {
+                      ctx.log.warn('Failed to fire reminder', {
+                        eventId: event.id,
+                        error: err instanceof Error ? err.message : String(err),
+                      })
+                    }
+                  } else if (reminderMs > nowMs) {
+                    // Future reminder — track earliest
+                    earliestFuture = Math.min(earliestFuture, reminderMs - nowMs)
                   }
-                } else if (reminderMs > nowMs) {
-                  // Future reminder — track earliest
-                  earliestFuture = Math.min(earliestFuture, reminderMs - nowMs)
                 }
-              }
 
-              if (earliestFuture < Infinity) {
-                nextReminderMs = Math.min(earliestFuture, POLL_INTERVAL_MS)
+                if (earliestFuture < Infinity) {
+                  nextReminderMs = Math.min(earliestFuture, POLL_INTERVAL_MS)
+                }
               }
             } catch (err) {
               ctx.log.warn('Reminder processing failed', {

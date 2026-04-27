@@ -126,6 +126,7 @@
                     "component": "Select",
                     "label": "Reminder Minutes Before Event",
                     "options": [
+                      { "label": "No reminder", "value": "null" },
                       { "label": "At time", "value": "0" },
                       { "label": "1 minute before", "value": "1" },
                       { "label": "5 minutes before", "value": "5" },

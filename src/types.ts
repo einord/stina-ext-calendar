@@ -147,7 +147,8 @@ export interface CalendarEventUpdate {
 export interface CalendarSettings {
   id: string
   userId: string
-  reminderMinutes: number
+  /** Minutes before an event to send a reminder. `null` disables reminders. */
+  reminderMinutes: number | null
   instruction: string
   eventInstruction: string
   createdAt: string
@@ -158,7 +159,8 @@ export interface CalendarSettings {
  * Input for updating calendar settings
  */
 export interface CalendarSettingsUpdate {
-  reminderMinutes?: number
+  /** Minutes before an event. Pass `null` to disable reminders. */
+  reminderMinutes?: number | null
   instruction?: string
   eventInstruction?: string
 }

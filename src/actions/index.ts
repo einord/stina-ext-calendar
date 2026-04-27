@@ -534,7 +534,11 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
           return {
             success: true,
             data: {
-              reminderMinutes: settings.reminderMinutes,
+              // Stringify so the Select component (string-keyed options)
+              // matches; the updateSetting action coerces back to number.
+              // `null` (= No reminder) is encoded as the literal "null".
+              reminderMinutes:
+                settings.reminderMinutes === null ? 'null' : String(settings.reminderMinutes),
               instruction: settings.instruction,
               eventInstruction: settings.eventInstruction,
             },
@@ -563,7 +567,9 @@ export function registerActions(actionsApi: ActionsApi, deps: ActionDeps): Array
           const userRepo = createUserRepository(execContext)
 
           if (key === 'reminderMinutes') {
-            await userRepo.settings.update({ reminderMinutes: parseInt(value, 10) })
+            // The Select uses the literal string "null" to mean "No reminder".
+            const minutes = value === 'null' ? null : parseInt(value, 10)
+            await userRepo.settings.update({ reminderMinutes: minutes })
           } else if (key === 'instruction') {
             await userRepo.settings.update({ instruction: value })
           } else if (key === 'eventInstruction') {
