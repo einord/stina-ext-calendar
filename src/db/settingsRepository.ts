@@ -11,7 +11,7 @@ const COLLECTIONS = {
 
 interface SettingsDocument {
   id: string
-  reminderMinutes: number
+  reminderMinutes: number | null
   instruction: string
   eventInstruction: string
   createdAt: string
@@ -68,7 +68,10 @@ export class SettingsRepository {
     const settings = await this.get()
     const now = new Date().toISOString()
 
-    const reminderMinutes = update.reminderMinutes ?? settings.reminderMinutes
+    // `reminderMinutes` may be explicitly null (= "No reminder"), so use
+    // `in` rather than `??` to distinguish "not set" from "explicit null".
+    const reminderMinutes =
+      'reminderMinutes' in update ? (update.reminderMinutes ?? null) : settings.reminderMinutes
     const instruction = update.instruction ?? settings.instruction
     const eventInstruction = update.eventInstruction ?? settings.eventInstruction
 
