@@ -145,9 +145,10 @@
                     }
                   },
                   {
-                    "component": "TextInput",
+                    "component": "TextArea",
                     "label": "Reminder Instruction",
                     "placeholder": "Remind me briefly about the upcoming event",
+                    "rows": 5,
                     "value": "$settings.instruction",
                     "onChangeAction": {
                       "action": "updateSetting",
@@ -166,9 +167,10 @@
                     }
                   },
                   {
-                    "component": "TextInput",
+                    "component": "TextArea",
                     "label": "Event Creation Instruction",
                     "placeholder": "E.g. Put private events in account X, work events in Y",
+                    "rows": 5,
                     "value": "$settings.eventInstruction",
                     "onChangeAction": {
                       "action": "updateSetting",
